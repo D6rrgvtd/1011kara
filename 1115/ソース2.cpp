@@ -82,6 +82,118 @@ class DIRECTX12
 
 		return device;
 	}
+	ID3D12DescriptorHeap* CreateRTVDescriptorHeap(ID3D12Device* device, UINT numDescriptors) 
+	{
+		D3D12_DESCRIPTOR_HEAP_DESC rtvHeapDesc = {};
+		rtvHeapDesc.NumDescriptors = 2;
+		rtvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		rtvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		ID3D12DescriptorHeap* rtvHeap;
+		device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&rtvHeap));
 
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
+		UINT rtvDescriptorSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
+		rtvHandle.ptr += rtvDescriptorSize;
+	}
+	ID3D12CommandAllocator* CreateCommandAllocator(ID3D12CommandAllocator* CommandAllocator)
+	{
+		ID3D12CommandAllocator* commandAllocators[2];
+
+		for (int i = 0; i < 2; i++)
+		{
+			
+		}
+	}
+	ID3D12CommandQueue* CreateCommandQueue(ID3D12Device* device)
+	{
+		// コマンドキューの設定
+		D3D12_COMMAND_QUEUE_DESC queueDesc = {};
+		queueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;    // 直接実行型
+		queueDesc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;  // 通常優先度
+		queueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;    // 特別フラグなし
+		queueDesc.NodeMask = 0;                             // 単一GPU使用
+
+		ID3D12CommandQueue* commandQueue;
+		HRESULT hr = device->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
+
+		if (FAILED(hr))
+		{
+			OutputDebugString("Failed to create Command Queue\n");
+			return nullptr;
+		}
+
+		// デバッグ用の名前設定（任意だが推奨）
+		commandQueue->SetName(L"Main Command Queue");
+
+		return commandQueue;
+	}
+	IDXGISwapChain3* CreateSwapChain(IDXGIFactory4* factory, ID3D12CommandQueue* commandQueue, HWND hwnd)
+	{
+		// スワップチェーンの詳細設定
+		DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+		swapChainDesc.BufferCount = 2;                      // ダブルバッファリング
+		swapChainDesc.Width = 1280;                         // 画面幅
+		swapChainDesc.Height = 720;                         // 画面高
+		swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // ピクセルフォーマット
+		swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;  // レンダーターゲット用
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;     // 高速切替
+		swapChainDesc.SampleDesc.Count = 1;                 // マルチサンプリングなし
+
+		IDXGISwapChain1* swapChain1;
+		HRESULT hr = factory->CreateSwapChainForHwnd(
+			commandQueue,       // コマンドキュー
+			hwnd,              // ターゲットウィンドウ
+			&swapChainDesc,    // 設定
+			nullptr,           // フルスクリーン設定
+			nullptr,           // 出力制限
+			&swapChain1        // 作成されるスワップチェーン
+		);
+
+		if (FAILED(hr))
+		{
+			OutputDebugString("Failed to create Swap Chain\n");
+			return nullptr;
+		}
+
+		// より高機能なインターフェースにキャスト
+		IDXGISwapChain3* swapChain;
+		hr = swapChain1->QueryInterface(IID_PPV_ARGS(&swapChain));
+		swapChain1->Release();
+		if (FAILED(hr))
+		{
+			OutputDebugString("Failed to cast to SwapChain3\n");
+			return nullptr;
+		}
+
+		return swapChain;
+	}
+	void EnableDebugLayer()
+	{
+#if defined(_DEBUG)
+		// デバッグインターフェースを取得
+		ID3D12Debug* debugController;
+		if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
+		{
+			// デバッグレイヤーを有効化
+			debugController->EnableDebugLayer();
+
+			// より詳細な検証を有効化（任意）
+			ID3D12Debug1* debugController1;
+			if (SUCCEEDED(debugController->QueryInterface(IID_PPV_ARGS(&debugController1))))
+			{
+				debugController1->SetEnableGPUBasedValidation(TRUE);
+			}
+		}
+#endif
+	}
+	ID3D12Resource* CreteResource(ID3D12Resource* Resource)
+	{
+		ID3D12Resource* renderTargets[2];
+
+		for (int i = 0; i < 2; i++)
+		{
+			
+		}
+	}
 };
