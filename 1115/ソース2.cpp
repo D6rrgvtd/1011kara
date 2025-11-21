@@ -1,5 +1,7 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
+#include <stdio.h>
+#include <wchar.h> 
 
 class DIRECTX12
 {
@@ -7,7 +9,7 @@ class DIRECTX12
 	{
 		IDXGIFactory4* factory;
 		UINT createFactoryFlags = 0;
-
+			
 #if defined(_DEBUG)
 		createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
 #endif // defined(_DEBUG)
@@ -128,6 +130,38 @@ class DIRECTX12
 
 		return commandQueue;
 	}
+	ID3D12Resource* CreateRenderTargets(
+		ID3D12Device* device,
+		IDXGISwapChain3* swapChain,
+		ID3D12DescriptorHeap* rtvHeap,
+		UINT rtvDescriptorSize)
+	{
+		ID3D12Resource* renderTargets[2];
+
+		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle =
+			rtvHeap->GetCPUDescriptorHandleForHeapStart();
+
+		for (UINT i = 0; i < 2; i++)
+		{
+			HRESULT hr = swapChain->GetBuffer(i, IID_PPV_ARGS(&renderTargets[i]));
+			if (FAILED(hr))
+			{
+				OutputDebugString("Failed to get SwapChain Buffer\n");
+				return nullptr;
+			}
+
+			device->CreateRenderTargetView(renderTargets[i], nullptr, rtvHandle);
+
+			wchar_t name[64];
+			swprintf_s(name,64,L"RenderTarget_%d", i);
+			renderTargets[i]->SetName(name);
+
+			rtvHandle.ptr += rtvDescriptorSize;
+		}
+
+		return renderTargets[0];
+	}
+
 	IDXGISwapChain3* CreateSwapChain(IDXGIFactory4* factory, ID3D12CommandQueue* commandQueue, HWND hwnd)
 	{
 		// スワップチェーンの詳細設定
@@ -196,4 +230,30 @@ class DIRECTX12
 			
 		}
 	}
+	ID3D12CommandAllocator* CreateCommandAllocators(ID3D12Device* device)
+	{
+		ID3D12CommandAllocator* commandAllocators[2];
+
+		for (int i = 0; i < 2; i++)
+		{
+			HRESULT hr = device->CreateCommandAllocator(
+				D3D12_COMMAND_LIST_TYPE_DIRECT,
+				IID_PPV_ARGS(&commandAllocators[i])
+			);
+
+			if (FAILED(hr))
+			{
+				OutputDebugString("Failed to create Command Allocator\n");
+				return nullptr;
+			}
+
+			wchar_t name[64];
+			swprintf_s(name, L"CommandAllocator_%d", i);
+			commandAllocators[i]->SetName(name);
+		}
+
+		// とりあえず 0番を返す（必要なら配列化してクラスのメンバ管理）
+		return commandAllocators[0];
+	}
+
 };
