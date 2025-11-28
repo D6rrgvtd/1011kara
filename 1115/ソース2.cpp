@@ -255,5 +255,25 @@ class DIRECTX12
 		// とりあえず 0番を返す（必要なら配列化してクラスのメンバ管理）
 		return commandAllocators[0];
 	}
+	ID3D12GraphicsCommandList* CreateCommandList(
+		ID3D12Device* device,
+		ID3D12CommandAllocator* allocator
+	)
+	{
+		ID3D12GraphicsCommandList* commandList = nullptr;
 
+		HRESULT hr = device->CreateCommandList(
+			0,
+			D3D12_COMMAND_LIST_TYPE_DIRECT,
+			allocator,
+			nullptr,
+			IID_PPV_ARGS(&commandList)
+		);
+
+		
+		commandList->Close();
+
+		return commandList;
+	}
+	
 };
