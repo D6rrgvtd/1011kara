@@ -252,7 +252,6 @@ class DIRECTX12
 			commandAllocators[i]->SetName(name);
 		}
 
-		// とりあえず 0番を返す（必要なら配列化してクラスのメンバ管理）
 		return commandAllocators[0];
 	}
 	ID3D12GraphicsCommandList* CreateCommandList(
@@ -270,10 +269,27 @@ class DIRECTX12
 			IID_PPV_ARGS(&commandList)
 		);
 
+		if (FAILED(hr))
+		{
+			OutputDebugString("Failed to Create CommandList\n");
+				return nullptr;
+		}
+
 		
 		commandList->Close();
 
 		return commandList;
 	}
-	
+	ID3D12Fence* CreateFence(ID3D12Fence* fence)
+	{
+		UINT64 fencevalue = 0;
+		HANDLE fenceEvent;
+
+		HRESULT hr = fence->SetEventOnCompletion(fencevalue, fenceEvent);
+		if (FAILED(hr))
+		{
+			OutputDebugString("Failed to create Fence Event\n");
+			return nullptr;
+		}
+	}
 };
